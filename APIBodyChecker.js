@@ -1,13 +1,16 @@
 const body = {
     name: "William Loopesko",
     age: 33,
-    founder: "this is a true statement",
+    founder: false,
     company: "Aclymate",
     address: {
         description: "2432 S. Downing St, Denver, CO 80210",
         county: "Denver",
         country: "USA",
-    }
+    },
+    obj2: {
+        strOrBool: "45",
+    },
 }
 
 const schema = {
@@ -23,21 +26,34 @@ const schema = {
         county: {type: "string", required: false},
         country: {type: "string", required: false}
     },
+    obj2: {
+        type: "object", 
+        required: true,
+        strOrBool: {type: ["string", "boolean"], required: true},
+        county: {type: "string", required: false},
+        country: {type: "string", required: false}
+    },
 }
 
 const schemaChecker = (schema, body) => {
+    let matches = true;
     for(let prop in schema){
+        if(!matches) break;
         if(prop === "type" || prop === "required") continue;
-
+        
         const { type, required } = schema[prop];
-        const undefinedButRequired = typeof body[prop] === "undefined" && required;
-        const definedButNoMatchingTypes = typeof body[prop] !== "undefined" && !type.includes(typeof body[prop]);
-
-        if(undefinedButRequired || definedButNoMatchingTypes) return false;
-
-        if(type === "object") return schemaChecker(schema[prop], body[prop]);
+        if(!body?.hasOwnProperty(prop)){
+            if(required){
+                matches = false;
+            }
+            else {
+                continue;
+            }
+        }
+        else if(body?.hasOwnProperty(prop) && !type.includes(typeof body[prop])) matches = false;
+        else if(type === "object") matches = schemaChecker(schema[prop], body[prop]);
     }
-    return true;
+    return matches;
 }
 
 const result = schemaChecker(schema, body);
